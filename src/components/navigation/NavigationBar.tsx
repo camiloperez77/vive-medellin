@@ -5,7 +5,7 @@ import { Calendar, Home, Plus, Search, User } from 'lucide-react';
 const navigationItems = [
   {
     icon: Plus,
-    label: "Acciones de\nAdministrador",
+    label: "Crear evento",
     path: "/crear-evento",
   },
   {
