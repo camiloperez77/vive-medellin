@@ -16,7 +16,7 @@ export const EventListPage: React.FC = () => {
   const [currentFilters, setCurrentFilters] = React.useState<SearchFilters>({
     busqueda: '',
     categoria: '',
-    fecha: ''
+    fecha: '',
   });
 
   // Cargar eventos inicialmente
@@ -27,8 +27,8 @@ export const EventListPage: React.FC = () => {
   const loadEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await eventService.getEvents();
-      setEvents(response.data);
+      const events = await eventService.getFeaturedEvents();
+      setEvents(events);
     } catch (error) {
       console.error('Error al cargar eventos:', error);
       // Aquí podrías mostrar un mensaje de error
@@ -41,7 +41,7 @@ export const EventListPage: React.FC = () => {
     try {
       setIsLoading(true);
       setCurrentFilters(filters);
-      
+
       // Si no hay filtros, cargar todos los eventos
       if (!filters.busqueda && !filters.categoria && !filters.fecha) {
         const response = await eventService.getEvents();
@@ -54,10 +54,11 @@ export const EventListPage: React.FC = () => {
       let filteredEvents = response.data;
 
       if (filters.busqueda) {
-        filteredEvents = filteredEvents.filter(event =>
-          event.titulo.toLowerCase().includes(filters.busqueda.toLowerCase()) ||
-          event.descripcion.toLowerCase().includes(filters.busqueda.toLowerCase()) ||
-          event.organizador.nombre.toLowerCase().includes(filters.busqueda.toLowerCase())
+        filteredEvents = filteredEvents.filter(
+          event =>
+            event.titulo.toLowerCase().includes(filters.busqueda.toLowerCase()) ||
+            event.descripcion.toLowerCase().includes(filters.busqueda.toLowerCase()) ||
+            event.organizador.nombre.toLowerCase().includes(filters.busqueda.toLowerCase())
         );
       }
 
@@ -80,13 +81,10 @@ export const EventListPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="text-center mb-8">
-        <h1 className="font-h-1 text-slate-900 mb-4">
-          Eventos en Medellín
-        </h1>
+        <h1 className="font-h-1 text-slate-900 mb-4">Eventos Destacados en Medellín</h1>
         <p className="font-p text-slate-700 max-w-3xl mx-auto">
-          Descubre los mejores eventos culturales, musicales y de entretenimiento 
-          que suceden en nuestra ciudad. Desde conciertos hasta obras de teatro, 
-          encuentra tu próxima experiencia inolvidable.
+          Descubre los eventos más destacados y populares que suceden en nuestra ciudad. Desde
+          conciertos hasta conferencias tecnológicas, encuentra las experiencias más recomendadas.
         </p>
       </header>
 
@@ -98,19 +96,18 @@ export const EventListPage: React.FC = () => {
         {!isLoading && (
           <div className="mb-6">
             <p className="font-p text-gray-600">
-              {events.length === 0 
-                ? 'No se encontraron eventos' 
-                : `Mostrando ${events.length} evento${events.length !== 1 ? 's' : ''}`
-              }
-              {(currentFilters.busqueda || currentFilters.categoria || currentFilters.fecha) && 
+              {events.length === 0
+                ? 'No se encontraron eventos destacados'
+                : `Mostrando ${events.length} evento${events.length !== 1 ? 's' : ''} destacado${events.length !== 1 ? 's' : ''}`}
+              {(currentFilters.busqueda || currentFilters.categoria || currentFilters.fecha) &&
                 ' que coinciden con tu búsqueda'}
             </p>
           </div>
         )}
 
         {/* Lista de eventos */}
-        <EventList 
-          events={events} 
+        <EventList
+          events={events}
           isLoading={isLoading}
           emptyMessage="No se encontraron eventos. Intenta ajustar tus filtros de búsqueda."
         />
