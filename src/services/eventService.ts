@@ -9,44 +9,44 @@ class EventService {
   async getEvents(params?: EventSearchParams): Promise<PaginatedResponse<Event>> {
     try {
       const searchParams = new URLSearchParams();
-      
+
       if (params?.query) {
         searchParams.append('q', params.query);
       }
-      
+
       if (params?.filters?.categoria) {
         searchParams.append('categoria', params.filters.categoria);
       }
-      
+
       if (params?.filters?.destacado !== undefined) {
         searchParams.append('destacado', params.filters.destacado.toString());
       }
-      
+
       if (params?.page) {
         searchParams.append('_page', params.page.toString());
       }
-      
+
       if (params?.limit) {
         searchParams.append('_limit', params.limit.toString());
       }
 
       const response = await fetch(`${API_BASE_URL}/eventos?${searchParams}`);
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
       const eventos = await response.json();
       const total = parseInt(response.headers.get('X-Total-Count') || '0');
-      
+
       return {
         data: eventos,
         pagination: {
           page: params?.page || 1,
           limit: params?.limit || 10,
           total,
-          totalPages: Math.ceil(total / (params?.limit || 10))
-        }
+          totalPages: Math.ceil(total / (params?.limit || 10)),
+        },
       };
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -60,7 +60,7 @@ class EventService {
   async getFeaturedEvents(): Promise<Event[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/eventos?destacado=true`);
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
@@ -78,7 +78,7 @@ class EventService {
   async getEventById(id: string): Promise<Event> {
     try {
       const response = await fetch(`${API_BASE_URL}/eventos/${id}`);
-      
+
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Evento no encontrado');
@@ -109,9 +109,9 @@ class EventService {
             numero_funcion: 1,
             fecha: eventData.fecha,
             horario: eventData.horario,
-            status: 'published'
-          }
-        ]
+            status: 'published',
+          },
+        ],
       };
 
       const response = await fetch(`${API_BASE_URL}/eventos`, {
@@ -131,7 +131,7 @@ class EventService {
       return {
         data: createdEvent,
         message: 'Evento creado exitosamente',
-        success: true
+        success: true,
       };
     } catch (error) {
       console.error('Error creating event:', error);
@@ -142,14 +142,18 @@ class EventService {
   /**
    * Actualiza un evento existente con registro de auditoría
    */
-  async updateEvent(id: string, eventData: Partial<Event>, editedBy: string = 'admin1'): Promise<ApiResponse<Event>> {
+  async updateEvent(
+    id: string,
+    eventData: Partial<Event>,
+    editedBy: string = 'admin1'
+  ): Promise<ApiResponse<Event>> {
     try {
       // Obtener el evento actual para comparar cambios
       const currentEvent = await this.getEventById(id);
-      
+
       // Detectar campos editados
       const changedFields = this.detectChanges(currentEvent, eventData);
-      
+
       const updatedEvent = {
         ...eventData,
         updated_at: new Date().toISOString(),
@@ -162,9 +166,9 @@ class EventService {
             edited_by: editedBy,
             edited_at: new Date().toISOString(),
             changed_fields: changedFields,
-            changes: this.getFieldChanges(currentEvent, eventData, changedFields)
-          }
-        ]
+            changes: this.getFieldChanges(currentEvent, eventData, changedFields),
+          },
+        ],
       };
 
       const response = await fetch(`${API_BASE_URL}/eventos/${id}`, {
@@ -184,7 +188,7 @@ class EventService {
       return {
         data: updated,
         message: 'Evento actualizado exitosamente',
-        success: true
+        success: true,
       };
     } catch (error) {
       console.error('Error updating event:', error);
@@ -197,40 +201,56 @@ class EventService {
    */
   private detectChanges(current: Event, updated: Partial<Event>): string[] {
     const changes: string[] = [];
-    
+
     if (updated.titulo !== undefined && updated.titulo !== current.titulo) changes.push('título');
-    if (updated.descripcion !== undefined && updated.descripcion !== current.descripcion) changes.push('descripción');
+    if (updated.descripcion !== undefined && updated.descripcion !== current.descripcion)
+      changes.push('descripción');
     if (updated.fecha !== undefined && updated.fecha !== current.fecha) changes.push('fecha');
-    if (updated.horario !== undefined && updated.horario !== current.horario) changes.push('horario');
-    if (updated.categoria !== undefined && updated.categoria !== current.categoria) changes.push('categoría');
-    if (updated.modalidad !== undefined && updated.modalidad !== current.modalidad) changes.push('modalidad');
+    if (updated.horario !== undefined && updated.horario !== current.horario)
+      changes.push('horario');
+    if (updated.categoria !== undefined && updated.categoria !== current.categoria)
+      changes.push('categoría');
+    if (updated.modalidad !== undefined && updated.modalidad !== current.modalidad)
+      changes.push('modalidad');
     if (updated.aforo !== undefined && updated.aforo !== current.aforo) changes.push('aforo');
-    if (updated.valor_ingreso !== undefined && updated.valor_ingreso !== current.valor_ingreso) changes.push('valor de ingreso');
-    if (updated.destacado !== undefined && updated.destacado !== current.destacado) changes.push('destacado');
-    
+    if (updated.valor_ingreso !== undefined && updated.valor_ingreso !== current.valor_ingreso)
+      changes.push('valor de ingreso');
+    if (updated.destacado !== undefined && updated.destacado !== current.destacado)
+      changes.push('destacado');
+
     // Verificar cambios en ubicación
     if (updated.ubicacion) {
-      if (updated.ubicacion.comuna_barrio !== current.ubicacion.comuna_barrio) changes.push('comuna/barrio');
-      if (updated.ubicacion.direccion_detallada !== current.ubicacion.direccion_detallada) changes.push('dirección');
-      if (updated.ubicacion.enlace_mapa !== current.ubicacion.enlace_mapa) changes.push('enlace del mapa');
+      if (updated.ubicacion.comuna_barrio !== current.ubicacion.comuna_barrio)
+        changes.push('comuna/barrio');
+      if (updated.ubicacion.direccion_detallada !== current.ubicacion.direccion_detallada)
+        changes.push('dirección');
+      if (updated.ubicacion.enlace_mapa !== current.ubicacion.enlace_mapa)
+        changes.push('enlace del mapa');
     }
-    
+
     // Verificar cambios en organizador
     if (updated.organizador) {
-      if (updated.organizador.nombre !== current.organizador.nombre) changes.push('nombre del organizador');
-      if (updated.organizador.email !== current.organizador.email) changes.push('email del organizador');
-      if (updated.organizador.celular !== current.organizador.celular) changes.push('celular del organizador');
+      if (updated.organizador.nombre !== current.organizador.nombre)
+        changes.push('nombre del organizador');
+      if (updated.organizador.email !== current.organizador.email)
+        changes.push('email del organizador');
+      if (updated.organizador.celular !== current.organizador.celular)
+        changes.push('celular del organizador');
     }
-    
+
     return changes;
   }
 
   /**
    * Obtiene los detalles específicos de los cambios
    */
-  private getFieldChanges(current: Event, updated: Partial<Event>, changedFields: string[]): Record<string, { before: any; after: any }> {
+  private getFieldChanges(
+    current: Event,
+    updated: Partial<Event>,
+    changedFields: string[]
+  ): Record<string, { before: any; after: any }> {
     const changes: Record<string, { before: any; after: any }> = {};
-    
+
     changedFields.forEach(field => {
       switch (field) {
         case 'título':
@@ -248,7 +268,7 @@ class EventService {
         // Agregar más casos según sea necesario
       }
     });
-    
+
     return changes;
   }
 
@@ -261,7 +281,7 @@ class EventService {
         status: 'cancelled',
         cancelled_at: new Date().toISOString(),
         cancelled_by: cancelledBy,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
       const response = await fetch(`${API_BASE_URL}/eventos/${id}`, {
@@ -281,10 +301,48 @@ class EventService {
       return {
         data: cancelledEvent,
         message: 'Evento cancelado exitosamente',
-        success: true
+        success: true,
       };
     } catch (error) {
       console.error('Error cancelling event:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Cambia el estado destacado de un evento
+   */
+  async toggleFeatured(id: string): Promise<ApiResponse<Event>> {
+    try {
+      // Obtener el evento actual para saber el estado actual
+      const currentEvent = await this.getEventById(id);
+
+      const toggleData = {
+        destacado: !currentEvent.destacado,
+        updated_at: new Date().toISOString(),
+      };
+
+      const response = await fetch(`${API_BASE_URL}/eventos/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(toggleData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const updatedEvent = await response.json();
+
+      return {
+        data: updatedEvent,
+        message: `Evento ${!currentEvent.destacado ? 'destacado' : 'quitado del destaque'} exitosamente`,
+        success: true,
+      };
+    } catch (error) {
+      console.error('Error toggling featured status:', error);
       throw error;
     }
   }
@@ -294,8 +352,10 @@ class EventService {
    */
   async getEventsByCategory(categoria: string): Promise<Event[]> {
     try {
-      const response = await fetch(`${API_BASE_URL}/eventos?categoria=${encodeURIComponent(categoria)}`);
-      
+      const response = await fetch(
+        `${API_BASE_URL}/eventos?categoria=${encodeURIComponent(categoria)}`
+      );
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
@@ -313,7 +373,7 @@ class EventService {
   async searchEvents(query: string): Promise<Event[]> {
     try {
       const response = await fetch(`${API_BASE_URL}/eventos?q=${encodeURIComponent(query)}`);
-      
+
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }

@@ -16,21 +16,19 @@ interface SearchFormProps {
   isLoading?: boolean;
 }
 
-
-
 export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = false }) => {
   const {
     register,
     handleSubmit,
     watch,
     reset,
-    formState: { errors }
+    formState: { errors },
   } = useForm<SearchFormData>({
     defaultValues: {
       busqueda: '',
       categoria: '',
-      fecha: ''
-    }
+      fecha: '',
+    },
   });
 
   const watchedValues = watch();
@@ -44,13 +42,13 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = fa
     onSearch({
       busqueda: '',
       categoria: '',
-      fecha: ''
+      fecha: '',
     });
   };
 
   // Búsqueda automática cuando cambian los filtros (opcional)
   React.useEffect(() => {
-    const subscription = watch((data) => {
+    const subscription = watch(data => {
       if (data.busqueda || data.categoria || data.fecha) {
         onSearch(data as SearchFormData);
       }
@@ -61,9 +59,9 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = fa
   return (
     <div className="bg-white p-6 rounded-lg shadow-md mb-6">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Campo de búsqueda general */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-6">
             <InputField
               id="busqueda"
               label="Buscar eventos"
@@ -74,35 +72,35 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = fa
           </div>
 
           {/* Filtro por categoría */}
-          <SelectField
-            id="categoria"
-            label="Categoría"
-            options={SEARCH_CATEGORY_OPTIONS}
-            register={register}
-            error={errors.categoria}
-            placeholder="Todas"
-          />
+          <div className="lg:col-span-3">
+            <SelectField
+              id="categoria"
+              label="Categoría"
+              options={SEARCH_CATEGORY_OPTIONS}
+              register={register}
+              error={errors.categoria}
+              placeholder="Categorías"
+            />
+          </div>
 
           {/* Filtro por fecha */}
-          <InputField
-            id="fecha"
-            label="Fecha"
-            type="date"
-            register={register}
-            error={errors.fecha}
-          />
+          <div className="lg:col-span-3">
+            <InputField
+              id="fecha"
+              label="Fecha"
+              type="date"
+              register={register}
+              error={errors.fecha}
+            />
+          </div>
         </div>
 
         {/* Botones de acción */}
         <div className="flex flex-col sm:flex-row gap-2 pt-4">
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="flex-1 sm:flex-none"
-          >
+          <Button type="submit" disabled={isLoading} className="flex-1 sm:flex-none">
             {isLoading ? 'Buscando...' : 'Buscar Eventos'}
           </Button>
-          
+
           <Button
             type="button"
             variant="outline"
@@ -125,7 +123,10 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onSearch, isLoading = fa
               )}
               {watchedValues.categoria && (
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  Categoría: {SEARCH_CATEGORY_OPTIONS.find(c => c.value === watchedValues.categoria)?.label}
+                  Categoría:{' '}
+                  {watchedValues.categoria === ''
+                    ? 'Todas las categorías'
+                    : SEARCH_CATEGORY_OPTIONS.find(c => c.value === watchedValues.categoria)?.label}
                 </span>
               )}
               {watchedValues.fecha && (
