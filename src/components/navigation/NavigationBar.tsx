@@ -1,42 +1,62 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Calendar, Home, Plus, Search, User } from 'lucide-react';
-
-const navigationItems = [
-  {
-    icon: Plus,
-    label: "Crear evento",
-    path: "/crear-evento",
-  },
-  {
-    icon: Home,
-    label: "Inicio",
-    path: "/",
-  },
-  {
-    icon: Calendar,
-    label: "Eventos", 
-    path: "/eventos",
-  },
-  {
-    icon: Search,
-    label: "Buscar",
-    path: "/buscar",
-  },
-  {
-    icon: User,
-    label: "Perfil",
-    path: "/perfil",
-  },
-];
+import { Home, Plus, User, Shield } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 export const NavigationBar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
 
   const handleNavigation = (path: string) => {
     navigate(path);
   };
+
+  const handleUserClick = () => {
+    if (isAuthenticated) {
+      navigate('/perfil');
+    } else {
+      navigate('/login');
+    }
+  };
+
+  // Filtrar items de navegación según el rol del usuario y la página actual
+  const getNavigationItems = () => {
+    const baseItems = [
+      {
+        icon: Home,
+        label: 'Inicio',
+        path: '/',
+      },
+      {
+        icon: User,
+        label: 'Perfil',
+        path: '/perfil',
+      },
+    ];
+
+    // Solo mostrar "Crear evento" si estamos en EventListPage y el usuario es admin
+    if (location.pathname === '/eventos' && user?.role === 'admin') {
+      baseItems.unshift({
+        icon: Plus,
+        label: 'Crear evento',
+        path: '/crear-evento',
+      });
+    }
+
+    // Solo mostrar "Dashboard" si el usuario es admin
+    if (user?.role === 'admin') {
+      baseItems.splice(1, 0, {
+        icon: Shield,
+        label: 'Dashboard',
+        path: '/eventos',
+      });
+    }
+
+    return baseItems;
+  };
+
+  const navigationItems = getNavigationItems();
 
   return (
     <nav className="w-full h-[99px] bg-white shadow-sm border-b">
@@ -54,15 +74,13 @@ export const NavigationBar: React.FC = () => {
           {navigationItems.map((item, index) => {
             const IconComponent = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <button
                 key={index}
-                onClick={() => handleNavigation(item.path)}
+                onClick={item.icon === User ? handleUserClick : () => handleNavigation(item.path)}
                 className={`flex flex-col items-center justify-center h-auto p-3 rounded-lg transition-colors ${
-                  isActive 
-                    ? 'bg-purple-100 text-purple-700' 
-                    : 'hover:bg-gray-100 text-gray-700'
+                  isActive ? 'bg-purple-100 text-purple-700' : 'hover:bg-gray-100 text-gray-700'
                 }`}
               >
                 <IconComponent className="w-6 h-6 mb-1" />
@@ -72,12 +90,6 @@ export const NavigationBar: React.FC = () => {
               </button>
             );
           })}
-        </div>
-
-        <div className="flex-shrink-0">
-          <div className="flex items-center justify-center w-11 h-6 bg-purple-700 rounded-full">
-            <span className="text-white text-xs">Admin</span>
-          </div>
         </div>
       </div>
     </nav>

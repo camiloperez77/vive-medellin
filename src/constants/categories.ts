@@ -16,10 +16,7 @@ export const EVENT_CATEGORIES = [
   { value: 'Inmobiliarios', label: 'Inmobiliarios' },
   { value: 'Turísticos', label: 'Turísticos' },
   { value: 'Familiares', label: 'Familiares' },
-  { value: 'Para adultos', label: 'Para adultos' }
+  { value: 'Para adultos', label: 'Para adultos' },
 ];
 
-export const SEARCH_CATEGORY_OPTIONS = [
-  { value: '', label: 'Todas las categorías' },
-  ...EVENT_CATEGORIES
-];
+export const SEARCH_CATEGORY_OPTIONS = [...EVENT_CATEGORIES];

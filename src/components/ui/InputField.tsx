@@ -20,7 +20,7 @@ export const InputField: React.FC<InputFieldProps> = ({
   register,
   error,
   required = false,
-  className = ''
+  className = '',
 }) => {
   return (
     <div className={`space-y-2 ${className}`}>
@@ -35,16 +35,12 @@ export const InputField: React.FC<InputFieldProps> = ({
         {...register(id)}
         className={`
           w-full px-3 py-2 border rounded-md shadow-sm 
-          font-p text-slate-900
+          font-p text-slate-900 h-10
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           ${error ? 'border-red-500' : 'border-gray-300'}
         `}
       />
-      {error && (
-        <p className="text-red-500 font-subtle text-sm">
-          {error.message}
-        </p>
-      )}
+      {error && <p className="text-red-500 font-subtle text-sm">{error.message}</p>}
     </div>
   );
 };

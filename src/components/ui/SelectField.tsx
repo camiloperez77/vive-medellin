@@ -20,7 +20,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   error,
   required = false,
   placeholder = 'Seleccionar...',
-  className = ''
+  className = '',
 }) => {
   return (
     <div className={`space-y-2 ${className}`}>
@@ -33,23 +33,19 @@ export const SelectField: React.FC<SelectFieldProps> = ({
         {...register(id)}
         className={`
           w-full px-3 py-2 border rounded-md shadow-sm 
-          font-p text-slate-900 bg-white
+          font-p text-slate-900 bg-white h-10
           focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
           ${error ? 'border-red-500' : 'border-gray-300'}
         `}
       >
         <option value="">{placeholder}</option>
-        {options.map((option) => (
+        {options.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
       </select>
-      {error && (
-        <p className="text-red-500 font-subtle text-sm">
-          {error.message}
-        </p>
-      )}
+      {error && <p className="text-red-500 font-subtle text-sm">{error.message}</p>}
     </div>
   );
 };

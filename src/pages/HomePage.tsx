@@ -69,7 +69,8 @@ export const HomePage: React.FC = () => {
         );
       }
 
-      if (filters.categoria) {
+      // Filtrar por categoría solo si se seleccionó una categoría específica (no "Todas")
+      if (filters.categoria && filters.categoria !== '') {
         filteredEvents = filteredEvents.filter(event => event.categoria === filters.categoria);
       }
 
