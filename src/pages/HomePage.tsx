@@ -4,6 +4,7 @@ import type { Event } from '../types';
 import { SearchForm } from '../components/forms/SearchForm';
 import { EventList } from '../components/events/EventList';
 import { EventCard } from '../components/events/EventCard';
+import { compareDates } from '../utils';
 
 interface SearchFilters {
   busqueda: string;
@@ -75,7 +76,7 @@ export const HomePage: React.FC = () => {
       }
 
       if (filters.fecha) {
-        filteredEvents = filteredEvents.filter(event => event.fecha === filters.fecha);
+        filteredEvents = filteredEvents.filter(event => compareDates(event.fecha, filters.fecha));
       }
 
       setSearchResults(filteredEvents);

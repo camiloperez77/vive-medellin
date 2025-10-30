@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Event } from '../../types';
+import { isEventFinished } from '../../utils';
 
 interface EventCardProps {
   event: Event;
@@ -38,6 +39,9 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
     return category || 'Sin categoría';
   };
 
+  // Determinar si el evento ya finalizó
+  const eventFinished = isEventFinished(event.fecha, event.horario);
+
   return (
     <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden relative">
       {/* Imagen del evento */}
@@ -64,8 +68,17 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
           </span>
         </div>
 
-        {/* Badge de evento destacado */}
-        {event.destacado && (
+        {/* Badge de evento finalizado */}
+        {eventFinished && (
+          <div className="absolute top-4 right-4">
+            <span className="bg-gray-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+              📅 Finalizado
+            </span>
+          </div>
+        )}
+
+        {/* Badge de evento destacado (solo si no está finalizado) */}
+        {event.destacado && !eventFinished && (
           <div className="absolute top-4 right-4">
             <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">
               ⭐ Destacado
@@ -86,6 +99,11 @@ export const EventCard: React.FC<EventCardProps> = ({ event }) => {
               CANCELADO
             </div>
           </div>
+        )}
+
+        {/* Overlay sutil para evento finalizado */}
+        {eventFinished && event.status !== 'cancelled' && (
+          <div className="absolute inset-0 bg-black/20 pointer-events-none"></div>
         )}
       </div>
 
