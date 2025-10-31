@@ -1,5 +1,6 @@
 import { format, parseISO, isValid, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { EventStatus, Event } from '../types';
 
 /**
  * Formatea una fecha en formato dd/mm/yyyy
@@ -36,7 +37,13 @@ export const formatTime = (time: string): string => {
 export const combineDateAndTime = (date: string, time: string): Date => {
   const [day, month, year] = date.split('/');
   const [hours, minutes] = time.split(':');
-  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+  return new Date(
+    parseInt(year),
+    parseInt(month) - 1,
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes)
+  );
 };
 
 /**
@@ -57,13 +64,13 @@ export const isFutureDateTime = (date: string, time: string): boolean => {
 export const isValidDateFormat = (date: string): boolean => {
   const regex = /^\d{2}\/\d{2}\/\d{4}$/;
   if (!regex.test(date)) return false;
-  
+
   const [day, month, year] = date.split('/').map(Number);
   const dateObj = new Date(year, month - 1, day);
-  
-  return dateObj.getFullYear() === year &&
-         dateObj.getMonth() === month - 1 &&
-         dateObj.getDate() === day;
+
+  return (
+    dateObj.getFullYear() === year && dateObj.getMonth() === month - 1 && dateObj.getDate() === day
+  );
 };
 
 /**
@@ -77,8 +84,8 @@ export const isValidTimeFormat = (time: string): boolean => {
 /**
  * Convierte un precio a formato colombiano
  */
-export const formatCurrency = (amount: number | "gratuito"): string => {
-  if (amount === "gratuito") return "Gratuito";
+export const formatCurrency = (amount: number | 'gratuito'): string => {
+  if (amount === 'gratuito') return 'Gratuito';
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
@@ -98,9 +105,7 @@ export const truncateText = (text: string, maxLength: number): string => {
  * Capitaliza la primera letra de cada palabra
  */
 export const capitalizeWords = (str: string): string => {
-  return str.replace(/\w\S*/g, (txt) => 
-    txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-  );
+  return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 };
 
 /**
@@ -127,15 +132,100 @@ export const isValidColombianPhone = (phone: string): boolean => {
 };
 
 /**
- * Debounce function
+ * Convierte fecha de formato yyyy-mm-dd (input HTML) a dd/mm/yyyy (datos)
  */
-export const debounce = <T extends (...args: any[]) => void>(
-  func: T,
-  wait: number
-): ((...args: Parameters<T>) => void) => {
-  let timeout: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
-  };
+export const formatInputDateToDisplay = (inputDate: string): string => {
+  if (!inputDate) return '';
+  try {
+    const [year, month, day] = inputDate.split('-');
+    return `${day}/${month}/${year}`;
+  } catch {
+    return inputDate;
+  }
+};
+
+/**
+ * Convierte fecha de formato dd/mm/yyyy (datos) a yyyy-mm-dd (input HTML)
+ */
+export const formatDisplayDateToInput = (displayDate: string): string => {
+  if (!displayDate) return '';
+  try {
+    const [day, month, year] = displayDate.split('/');
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  } catch {
+    return displayDate;
+  }
+};
+
+/**
+ * Compara dos fechas sin importar el formato (maneja tanto dd/mm/yyyy como yyyy-mm-dd)
+ */
+export const compareDates = (date1: string, date2: string): boolean => {
+  if (!date1 || !date2) return false;
+
+  try {
+    // Normalizar ambas fechas al mismo formato para comparación
+    let normalizedDate1 = date1;
+    let normalizedDate2 = date2;
+
+    // Si date1 está en formato yyyy-mm-dd, convertir a dd/mm/yyyy
+    if (date1.includes('-') && date1.split('-')[0].length === 4) {
+      normalizedDate1 = formatInputDateToDisplay(date1);
+    }
+
+    // Si date2 está en formato yyyy-mm-dd, convertir a dd/mm/yyyy
+    if (date2.includes('-') && date2.split('-')[0].length === 4) {
+      normalizedDate2 = formatInputDateToDisplay(date2);
+    }
+
+    return normalizedDate1 === normalizedDate2;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Determina si un evento ya finalizó (fecha anterior a hoy)
+ */
+export const isEventFinished = (eventDate: string, eventTime?: string): boolean => {
+  try {
+    let eventDateTime: Date;
+
+    if (eventTime) {
+      // Si tenemos hora, usar combineDateAndTime
+      eventDateTime = combineDateAndTime(eventDate, eventTime);
+    } else {
+      // Si solo tenemos fecha, crear Date al inicio del día
+      const [day, month, year] = eventDate.split('/');
+      eventDateTime = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+
+    const now = new Date();
+    return eventDateTime < now;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Determina si un evento está vigente (publicado, no finalizado y no cancelado)
+ */
+export const isEventActive = (event: Event): boolean => {
+  // Si el evento no está publicado, no es activo
+  if (event.status !== EventStatus.PUBLISHED) {
+    return false;
+  }
+
+  // Si tiene funciones, verificar que al menos una función esté activa
+  if (event.funciones && event.funciones.length > 0) {
+    return event.funciones.some(
+      funcion =>
+        funcion.status === EventStatus.PUBLISHED &&
+        funcion.status !== undefined &&
+        !isEventFinished(funcion.fecha, funcion.horario)
+    );
+  }
+
+  // Si no tiene funciones, verificar la fecha principal del evento
+  return !isEventFinished(event.fecha, event.horario);
 };

@@ -3,11 +3,13 @@ import { SearchForm } from '../components/forms/SearchForm';
 import { EventList } from '../components/events/EventList';
 import { eventService } from '../services/eventService';
 import type { Event } from '../types';
+import { compareDates } from '../utils';
 
 interface SearchFilters {
   busqueda: string;
   categoria: string;
   fecha: string;
+  estado: string;
 }
 
 export const EventListPage: React.FC = () => {
@@ -17,6 +19,7 @@ export const EventListPage: React.FC = () => {
     busqueda: '',
     categoria: '',
     fecha: '',
+    estado: '',
   });
   const [hasSearched, setHasSearched] = React.useState(false);
 
@@ -47,7 +50,12 @@ export const EventListPage: React.FC = () => {
       }
 
       if (filters.fecha) {
-        filteredEvents = filteredEvents.filter(event => event.fecha === filters.fecha);
+        filteredEvents = filteredEvents.filter(event => compareDates(event.fecha, filters.fecha));
+      }
+
+      // Filtrar por estado
+      if (filters.estado && filters.estado !== '') {
+        filteredEvents = filteredEvents.filter(event => event.status === filters.estado);
       }
 
       setEvents(filteredEvents);
@@ -74,7 +82,10 @@ export const EventListPage: React.FC = () => {
               {events.length === 0
                 ? 'No se encontraron eventos'
                 : `Mostrando ${events.length} evento${events.length !== 1 ? 's' : ''}`}
-              {(currentFilters.busqueda || currentFilters.categoria || currentFilters.fecha) &&
+              {(currentFilters.busqueda ||
+                currentFilters.categoria ||
+                currentFilters.fecha ||
+                currentFilters.estado) &&
                 ' que coinciden con tu búsqueda'}
             </p>
           </div>

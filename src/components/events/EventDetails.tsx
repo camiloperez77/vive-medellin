@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Event } from '../../types';
+import { isEventFinished } from '../../utils';
 
 interface EventDetailsProps {
   event: Event;
@@ -18,6 +19,10 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
   showAdminActions = false,
 }) => {
   const [showAdminMenu, setShowAdminMenu] = React.useState(false);
+
+  // Determinar si el evento ya finalizó
+  const eventFinished = isEventFinished(event.fecha, event.horario);
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto animate-pulse">
@@ -39,7 +44,9 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
 
   const formatDate = (dateStr: string) => {
     try {
-      const date = new Date(dateStr);
+      // Parse dd/mm/yyyy format
+      const [day, month, year] = dateStr.split('/');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       return new Intl.DateTimeFormat('es-CO', {
         weekday: 'long',
         year: 'numeric',
@@ -147,7 +154,16 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
           </div>
         )}
 
-        {event.destacado && event.status !== 'cancelled' && (
+        {/* Indicador de evento finalizado */}
+        {eventFinished && event.status !== 'cancelled' && (
+          <div className="absolute top-6 left-6">
+            <span className="bg-gray-600 text-white px-4 py-2 rounded-full font-bold">
+              📅 Finalizado
+            </span>
+          </div>
+        )}
+
+        {event.destacado && event.status !== 'cancelled' && !eventFinished && (
           <div className="absolute top-6 right-6">
             <span className="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full font-bold">
               ⭐ Evento Destacado
@@ -331,7 +347,7 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
             </div>
 
             {/* Acciones de administrador */}
-            {event.status !== 'cancelled' && showAdminActions && (
+            {event.status !== 'cancelled' && !eventFinished && showAdminActions && (
               <div className="relative">
                 <button
                   onClick={() => setShowAdminMenu(!showAdminMenu)}
