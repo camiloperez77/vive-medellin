@@ -19,10 +19,10 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
   showAdminActions = false,
 }) => {
   const [showAdminMenu, setShowAdminMenu] = React.useState(false);
-  
+
   // Determinar si el evento ya finalizó
   const eventFinished = isEventFinished(event.fecha, event.horario);
-  
+
   if (isLoading) {
     return (
       <div className="max-w-4xl mx-auto animate-pulse">
@@ -44,7 +44,9 @@ export const EventDetails: React.FC<EventDetailsProps> = ({
 
   const formatDate = (dateStr: string) => {
     try {
-      const date = new Date(dateStr);
+      // Parse dd/mm/yyyy format
+      const [day, month, year] = dateStr.split('/');
+      const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
       return new Intl.DateTimeFormat('es-CO', {
         weekday: 'long',
         year: 'numeric',

@@ -1,5 +1,6 @@
 import { format, parseISO, isValid, isAfter } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { EventStatus, Event } from '../types';
 
 /**
  * Formatea una fecha en formato dd/mm/yyyy
@@ -204,4 +205,27 @@ export const isEventFinished = (eventDate: string, eventTime?: string): boolean 
   } catch {
     return false;
   }
+};
+
+/**
+ * Determina si un evento está vigente (publicado, no finalizado y no cancelado)
+ */
+export const isEventActive = (event: Event): boolean => {
+  // Si el evento no está publicado, no es activo
+  if (event.status !== EventStatus.PUBLISHED) {
+    return false;
+  }
+
+  // Si tiene funciones, verificar que al menos una función esté activa
+  if (event.funciones && event.funciones.length > 0) {
+    return event.funciones.some(
+      funcion =>
+        funcion.status === EventStatus.PUBLISHED &&
+        funcion.status !== undefined &&
+        !isEventFinished(funcion.fecha, funcion.horario)
+    );
+  }
+
+  // Si no tiene funciones, verificar la fecha principal del evento
+  return !isEventFinished(event.fecha, event.horario);
 };
