@@ -5,3 +5,4 @@ export { EventDetailPage } from './EventDetailPage';
 export { LoginPage } from './LoginPage';
 export { ProfilePage } from './ProfilePage';
 export { NotFoundPage } from './NotFoundPage';
+export { TrendsPage } from './TrendsPage';
