@@ -9,6 +9,7 @@ import {
   LoginPage,
   ProfilePage,
   NotFoundPage,
+  TrendsPage,
 } from './pages';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
           <MainLayout>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/tendencias" element={<TrendsPage />} />
               <Route
                 path="/eventos"
                 element={

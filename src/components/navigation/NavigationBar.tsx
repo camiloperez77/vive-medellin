@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Plus, User, Shield } from 'lucide-react';
+import { Home, Plus, User, Shield, TrendingUp } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 export const NavigationBar: React.FC = () => {
@@ -27,6 +27,11 @@ export const NavigationBar: React.FC = () => {
         icon: Home,
         label: 'Inicio',
         path: '/',
+      },
+      {
+        icon: TrendingUp,
+        label: 'Tendencias',
+        path: '/tendencias',
       },
       {
         icon: User,

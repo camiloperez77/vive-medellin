@@ -1,4 +1,5 @@
 import { Event, EventSearchParams, ApiResponse, PaginatedResponse } from '@/types';
+import { generateId } from '@/utils';
 
 const API_BASE_URL = 'http://localhost:3001';
 
@@ -100,7 +101,7 @@ class EventService {
     try {
       const newEvent = {
         ...eventData,
-        id: this.generateId(),
+        id: generateId(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         status: 'published',
@@ -399,10 +400,97 @@ class EventService {
   }
 
   /**
-   * Genera un ID único
+   * Obtiene estadísticas y tendencias de la plataforma
    */
-  private generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  async getTrendsData(): Promise<{
+    totalEvents: number;
+    activeEvents: number;
+    totalUsers: number;
+    popularCategories: Array<{ name: string; count: number; percentage: number }>;
+    topLocations: Array<{ name: string; count: number; percentage: number }>;
+    monthlyGrowth: Array<{ month: string; events: number }>;
+  }> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/eventos`);
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const events: Event[] = await response.json();
+
+      // Calcular estadísticas
+      const totalEvents = events.length;
+      const activeEvents = events.filter(event => event.status === 'published').length;
+
+      // Para usuarios, mantenemos un valor mock ya que no está en db.json
+      const totalUsers = 2847;
+
+      // Calcular categorías populares
+      const categoryCount: Record<string, number> = {};
+      events.forEach(event => {
+        categoryCount[event.categoria] = (categoryCount[event.categoria] || 0) + 1;
+      });
+
+      const popularCategories = Object.entries(categoryCount)
+        .map(([name, count]) => ({
+          name,
+          count,
+          percentage: Math.round((count / totalEvents) * 100),
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      // Calcular ubicaciones más activas
+      const locationCount: Record<string, number> = {};
+      events.forEach(event => {
+        const location = event.ubicacion.comuna_barrio;
+        locationCount[location] = (locationCount[location] || 0) + 1;
+      });
+
+      const topLocations = Object.entries(locationCount)
+        .map(([name, count]) => ({
+          name,
+          count,
+          percentage: Math.round((count / totalEvents) * 100),
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      // Calcular crecimiento mensual
+      const monthlyCount: Record<string, number> = {};
+      events.forEach(event => {
+        try {
+          // Parsear fecha en formato DD/MM/YYYY
+          const [day, month, year] = event.fecha.split('/');
+          const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          const monthKey = date.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+
+          monthlyCount[monthKey] = (monthlyCount[monthKey] || 0) + 1;
+        } catch (error) {
+          console.warn('Error parsing date for event:', event.id, event.fecha);
+        }
+      });
+
+      // Crear array de meses ordenado
+      const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      const monthlyGrowth = monthNames.map(month => ({
+        month: month.charAt(0).toUpperCase() + month.slice(1),
+        events: monthlyCount[month] || 0,
+      }));
+
+      return {
+        totalEvents,
+        activeEvents,
+        totalUsers,
+        popularCategories,
+        topLocations,
+        monthlyGrowth,
+      };
+    } catch (error) {
+      console.error('Error fetching trends data:', error);
+      throw error;
+    }
   }
 }
 
