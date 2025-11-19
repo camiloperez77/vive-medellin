@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, BarChart3, Users, Calendar, MapPin, Award } from 'lucide-react';
+import { TrendingUp, BarChart3, Users, Calendar, Award } from 'lucide-react';
 import { eventService } from '../services/eventService';
+import { CategoriesPieChart } from '../components/charts/PieChart';
+import { EventRankingTable } from '../components/charts/EventRankingTable';
+import { Event } from '../types';
 
 export const TrendsPage: React.FC = () => {
   const [trendsData, setTrendsData] = useState<{
@@ -18,6 +21,17 @@ export const TrendsPage: React.FC = () => {
     topLocations: [],
     monthlyGrowth: [],
   });
+
+  const [eventRanking, setEventRanking] = useState<
+    Array<{
+      position: number;
+      event: Event;
+      views: number;
+      searches: number;
+      popularity: number;
+    }>
+  >([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,8 +39,14 @@ export const TrendsPage: React.FC = () => {
     const fetchTrendsData = async () => {
       try {
         setLoading(true);
-        const data = await eventService.getTrendsData();
+        const [data, ranking] = await Promise.all([
+          eventService.getTrendsData(),
+          eventService.getEventRanking(),
+        ]);
+        console.log('📊 Datos de tendencias cargados:', data);
+        console.log('🏆 Ranking de eventos cargado:', ranking);
         setTrendsData(data);
+        setEventRanking(ranking);
       } catch (err) {
         console.error('Error fetching trends data:', err);
         setError('Error al cargar los datos de tendencias');
@@ -132,95 +152,22 @@ export const TrendsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Popular Categories */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-purple-600" />
-              Categorías Más Populares
-            </h3>
-            <div className="space-y-4">
-              {trendsData.popularCategories.map((category, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{category.name}</p>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                      <div
-                        className="bg-purple-600 h-2 rounded-full"
-                        style={{ width: `${category.percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="ml-4 text-right">
-                    <p className="text-sm font-semibold text-gray-900">{category.count}</p>
-                    <p className="text-xs text-gray-500">{category.percentage}%</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Event Ranking Table */}
+        <div className="mb-8">
+          <EventRankingTable ranking={eventRanking} />
+        </div>
 
-          {/* Top Locations */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-green-600" />
-              Ubicaciones Más Activas
-            </h3>
-            <div className="space-y-4">
-              {trendsData.topLocations.map((location, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{location.name}</p>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                      <div
-                        className="bg-green-600 h-2 rounded-full"
-                        style={{ width: `${location.percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                  <div className="ml-4 text-right">
-                    <p className="text-sm font-semibold text-gray-900">{location.count}</p>
-                    <p className="text-xs text-gray-500">{location.percentage}%</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Popular Categories Pie Chart */}
+        <div className="mb-8">
+          <CategoriesPieChart categories={trendsData.popularCategories} />
         </div>
 
         {/* Monthly Growth Chart */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-            Crecimiento Mensual de Eventos
-          </h3>
-          <div className="flex items-end space-x-4 h-64">
-            {trendsData.monthlyGrowth.map((data, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center">
-                <div
-                  className="w-full bg-blue-500 rounded-t hover:bg-blue-600 transition-colors"
-                  style={{
-                    height: `${(data.events / Math.max(...trendsData.monthlyGrowth.map(d => d.events))) * 100}%`,
-                    minHeight: '20px',
-                  }}
-                ></div>
-                <p className="text-xs text-gray-600 mt-2">{data.month}</p>
-                <p className="text-sm font-semibold text-gray-900">{data.events}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Coming Soon Section */}
         <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
           <div className="text-center">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               🚀 Próximas Funcionalidades
             </h3>
-            <p className="text-gray-600 mb-4">
-              Estamos trabajando en nuevas métricas y visualizaciones
-            </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm"></div>
           </div>
         </div>

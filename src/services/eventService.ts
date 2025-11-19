@@ -473,7 +473,20 @@ class EventService {
       });
 
       // Crear array de meses ordenado
-      const monthNames = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+      const monthNames = [
+        'ene',
+        'feb',
+        'mar',
+        'abr',
+        'may',
+        'jun',
+        'jul',
+        'ago',
+        'sep',
+        'oct',
+        'nov',
+        'dic',
+      ];
       const monthlyGrowth = monthNames.map(month => ({
         month: month.charAt(0).toUpperCase() + month.slice(1),
         events: monthlyCount[month] || 0,
@@ -489,6 +502,64 @@ class EventService {
       };
     } catch (error) {
       console.error('Error fetching trends data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Obtiene el ranking de eventos más populares basado en visualizaciones y búsquedas
+   */
+  async getEventRanking(): Promise<
+    Array<{
+      position: number;
+      event: Event;
+      views: number;
+      searches: number;
+      popularity: number;
+    }>
+  > {
+    try {
+      const response = await fetch(`${API_BASE_URL}/eventos`);
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      const events: Event[] = await response.json();
+
+      // Filtrar solo eventos publicados
+      const publishedEvents = events.filter(event => event.status === 'published');
+
+      // Generar datos mockeados de visualizaciones y búsquedas
+      const eventsWithStats = publishedEvents.map(event => {
+        // Generar números aleatorios pero determinísticos basados en el ID
+        const seed = parseInt(event.id) || Math.random();
+        const views = Math.floor(150 + seed * 850); // Entre 150 y 1000
+        const searches = Math.floor(50 + seed * 450); // Entre 50 y 500
+
+        // Calcular popularidad (60% peso a vistas, 40% a búsquedas)
+        const popularity = views * 0.6 + searches * 0.4;
+
+        return {
+          event,
+          views,
+          searches,
+          popularity,
+        };
+      });
+
+      // Ordenar por popularidad descendente y tomar top 10
+      const ranking = eventsWithStats
+        .sort((a, b) => b.popularity - a.popularity)
+        .slice(0, 10)
+        .map((item, index) => ({
+          position: index + 1,
+          ...item,
+        }));
+
+      return ranking;
+    } catch (error) {
+      console.error('Error fetching event ranking:', error);
       throw error;
     }
   }
